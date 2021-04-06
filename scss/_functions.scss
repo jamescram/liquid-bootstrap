@@ -1,3 +1,95 @@
+@use "sass:string";
+@use "sass:list";
+@use "sass:meta";
+@use "sass:color";
+@use "sass:math";
+
+// Liquid functions
+//
+// Utility functions to convert objects to/from liquid syntax
+
+@function liquid-percent($v) {
+  @if meta.type-of($v) != number {
+    @error "liquid-percent: `#{$v}` is not a number";
+  }
+  @if math.unit($v) == "%" {
+    $v: $v / 100%;
+  }
+  @if $v < 1 {
+    @return $v * 100;
+  }
+  @return $v;
+}
+
+@function liquid-unwrap($v) {
+  @if string.index($v, "{{ ") != 1 {
+    @warn "liquid-unwrap: `#{$v}` is not a liquid object";
+    @return $v;
+  }
+  @return string.slice($v, 4, -4);
+}
+
+// Sass functions
+//
+// Redefine some global sass functions to use liquid filters where necessary
+
+@function rgba($args...) {
+  @if list.length($args) == 2 {
+    $color: list.nth($args, 1);
+    $alpha: list.nth($args, 2);
+    @if meta.type-of($color) != color {
+      @if string.index($color, "{%") == 1 {
+        $index: string.index($color, "\a{{");
+        $code: string.slice($color, 1, $index);
+        $color: string.slice($color, $index + 1);
+        @return "#{$code}#{rgba($color, $alpha)}";
+      }
+      @return "{% assign r = #{liquid-unwrap($color)} | color_extract: 'red' %}{% assign g = #{liquid-unwrap($color)} | color_extract: 'green' %}{% assign b = #{liquid-unwrap($color)} | color_extract: 'blue' %}\a{{ 'rgba(' | append : r | append: ', ' | append: g | append: ', ' | append: b  | append: ', #{$alpha})' }}";
+    }
+  }
+  @return rgb($args...);
+}
+
+@function mix($color1, $color2, $weight: 50%) {
+  @if meta.type-of($color1) != color or meta.type-of($color2) != color {
+    //@debug "mix color1: #{$color1}";
+    //@debug "mix color2: #{$color2}";
+    @if meta.type-of($color1) != color {
+      @if string.index($color1, "{%") == 1 {
+        $index: string.index($color1, "\a{{");
+        $code: string.slice($color1, 1, $index);
+        $color1: string.slice($color1, $index + 1);
+        @return "#{$code}#{mix($color1, $color2, $weight)}";
+      }
+      @if meta.type-of($color2) != color {
+        @if string.index($color2, "color_mix") {
+          @return "{{ #{liquid-unwrap($color2)} | color_mix: #{liquid-unwrap($color1)}, #{100 - liquid-percent($weight)} }}";
+        }
+        @return "{{ #{liquid-unwrap($color1)} | color_mix: #{liquid-unwrap($color2)}, #{liquid-percent($weight)} }}";
+      }
+      @return "{{ #{liquid-unwrap($color1)} | color_mix: \'#{$color2}\', #{liquid-percent($weight)} }}";
+    }
+    @if string.index($color2, "{%") == 1 {
+      $index: string.index($color2, "\a{{");
+      $code: string.slice($color2, 1, $index);
+      $color2: string.slice($color2, $index + 1);
+      @return "#{$code}#{mix($color1, $color2, $weight)}";
+    }
+    @if string.index($color2, "color_mix") {
+      @return "{{ #{liquid-unwrap($color2)} | color_mix: '#{$color1}', #{100 - liquid-percent($weight)} }}";
+    }
+    @return "{{ '#{$color1}' | color_mix: #{liquid-unwrap($color2)}, #{liquid-percent($weight)} }}";
+  }
+  @return color.mix($color1, $color2, $weight);
+}
+
+@function opacity($color) {
+  @if meta.type-of($color) != color {
+    @return "{{ #{liquid-unwrap($color)} | color_extract: \'alpha\' }}";
+  }
+  @return color.opacity($color);
+}
+
 // Bootstrap functions
 //
 // Utility mixins and functions for evaluating source code across our variables, maps, and mixins.
@@ -99,7 +191,28 @@
 // stylelint-disable-next-line scss/dollar-variable-default, scss/dollar-variable-pattern
 $_luminance-list: .0008 .001 .0011 .0013 .0015 .0017 .002 .0022 .0025 .0027 .003 .0033 .0037 .004 .0044 .0048 .0052 .0056 .006 .0065 .007 .0075 .008 .0086 .0091 .0097 .0103 .011 .0116 .0123 .013 .0137 .0144 .0152 .016 .0168 .0176 .0185 .0194 .0203 .0212 .0222 .0232 .0242 .0252 .0262 .0273 .0284 .0296 .0307 .0319 .0331 .0343 .0356 .0369 .0382 .0395 .0409 .0423 .0437 .0452 .0467 .0482 .0497 .0513 .0529 .0545 .0561 .0578 .0595 .0612 .063 .0648 .0666 .0685 .0704 .0723 .0742 .0762 .0782 .0802 .0823 .0844 .0865 .0887 .0908 .0931 .0953 .0976 .0999 .1022 .1046 .107 .1095 .1119 .1144 .117 .1195 .1221 .1248 .1274 .1301 .1329 .1356 .1384 .1413 .1441 .147 .15 .1529 .1559 .159 .162 .1651 .1683 .1714 .1746 .1779 .1812 .1845 .1878 .1912 .1946 .1981 .2016 .2051 .2086 .2122 .2159 .2195 .2232 .227 .2307 .2346 .2384 .2423 .2462 .2502 .2542 .2582 .2623 .2664 .2705 .2747 .2789 .2831 .2874 .2918 .2961 .3005 .305 .3095 .314 .3185 .3231 .3278 .3325 .3372 .3419 .3467 .3515 .3564 .3613 .3663 .3712 .3763 .3813 .3864 .3916 .3968 .402 .4072 .4125 .4179 .4233 .4287 .4342 .4397 .4452 .4508 .4564 .4621 .4678 .4735 .4793 .4851 .491 .4969 .5029 .5089 .5149 .521 .5271 .5333 .5395 .5457 .552 .5583 .5647 .5711 .5776 .5841 .5906 .5972 .6038 .6105 .6172 .624 .6308 .6376 .6445 .6514 .6584 .6654 .6724 .6795 .6867 .6939 .7011 .7084 .7157 .7231 .7305 .7379 .7454 .7529 .7605 .7682 .7758 .7835 .7913 .7991 .807 .8148 .8228 .8308 .8388 .8469 .855 .8632 .8714 .8796 .8879 .8963 .9047 .9131 .9216 .9301 .9387 .9473 .956 .9647 .9734 .9823 .9911 1;
 
-@function color-contrast($background, $color-contrast-dark: $color-contrast-dark, $color-contrast-light: $color-contrast-light, $min-contrast-ratio: $min-contrast-ratio) {
+@function color-contrast-check($background, $foreground, $value, $scale: $alert-color-scale, $color-contrast-dark: $color-contrast-dark, $color-contrast-light: $color-contrast-light, $min-contrast-ratio: $min-contrast-ratio) {
+  @if meta.type-of($background) != color or meta.type-of($foreground) != color {
+    @return "{% assign foreground = #{liquid-unwrap($foreground)} %}{% assign background = #{liquid-unwrap($background)} %}{% if background | color_contrast: foreground < #{$min-contrast-ratio} %}{% assign foregrounds = '#{$color-contrast-light} #{$color-contrast-dark} #{$white} #{$black}' | split: ' ' %}{% assign max-ratio = 0 %}{% assign max-ratio-color = '' %}{% for color in foregrounds %}{% assign contrast-ratio = background | color_contrast: color %}{% if contrast-ratio > #{$min-contrast-ratio} %}{% assign max-ratio-color = color %}{% break %}{% elsif contrast-ratio > max-ratio %}{% assign max-ratio = contrast-ratio %}{% assign max-ratio-color = color %}{% endif %}{% endfor %}{% assign foreground = #{liquid-unwrap($value)} | color_mix: max-ratio-color, #{abs($scale)} %}{% endif %}\a{{ foreground }}";
+  } @else if (contrast-ratio($background, $foreground) < $min-contrast-ratio) {
+    @return mix($value, color-contrast($background), abs($scale));
+  }
+  
+  @return $foreground;
+}
+
+@function color-contrast($background, $color-contrast-dark: $color-contrast-dark, $color-contrast-light: $color-contrast-light, $min-contrast-ratio: $min-contrast-ratio) {  
+  @if meta.type-of($background) != color or meta.type-of($color-contrast-light) != color or meta.type-of($color-contrast-dark) != color or meta.type-of($white) != color or meta.type-of($black) != color {
+    //@debug "color-contrast background: #{$background}";
+    $code: '';
+    @if string.index($background, "{%") == 1 {
+      $index: string.index($background, "\a{{");
+      $code: string.slice($background, 1, $index);
+      $background: string.slice($background, $index + 1);
+    }
+    @return "{% assign foregrounds = '#{$color-contrast-light} #{$color-contrast-dark} #{$white} #{$black}' | split: ' ' %}{% assign max-ratio = 0 %}{% assign max-ratio-color = '' %}{% for color in foregrounds %}\a#{$code}{% assign contrast-ratio = #{liquid-unwrap($background)} | color_contrast: color %}{% if contrast-ratio > #{$min-contrast-ratio} %}{% assign max-ratio-color = color %}{% break %}{% elsif contrast-ratio > max-ratio %}{% assign max-ratio = contrast-ratio %}{% assign max-ratio-color = color %}{% endif %}{% endfor %}\a{{ max-ratio-color }}";
+  }
+  
   $foregrounds: $color-contrast-light, $color-contrast-dark, $white, $black;
   $max-ratio: 0;
   $max-ratio-color: null;
@@ -113,16 +226,27 @@ $_luminance-list: .0008 .001 .0011 .0013 .0015 .0017 .002 .0022 .0025 .0027 .003
       $max-ratio-color: $color;
     }
   }
-
+  
   @warn "Found no color leading to #{$min-contrast-ratio}:1 contrast ratio against #{$background}...";
-
+  
   @return $max-ratio-color;
 }
 
 @function contrast-ratio($background, $foreground: $color-contrast-light) {
+  @if meta.type-of($background) != color or meta.type-of($foreground) != color {
+    @if meta.type-of($foreground) != color {
+      $code: "{% assign foreground = #{liquid-unwrap($foreground)} %}";
+      @if meta.type-of($background) != color {
+        @return "#{$code}\a{{ #{liquid-unwrap($background)} | color_contrast: foreground }}";
+      }
+      @return "#{$code}\a{{ '#{$background}' | color_contrast: foreground }}";
+    }
+    @return "{{ #{liquid-unwrap($background)} | color_contrast: '#{$foreground}' }}";
+  }
+  
   $l1: luminance($background);
   $l2: luminance(opaque($background, $foreground));
-
+  
   @return if($l1 > $l2, ($l1 + .05) / ($l2 + .05), ($l2 + .05) / ($l1 + .05));
 }
 
@@ -147,6 +271,26 @@ $_luminance-list: .0008 .001 .0011 .0013 .0015 .0017 .002 .0022 .0025 .0027 .003
 // Return opaque color
 // opaque(#fff, rgba(0, 0, 0, .5)) => #808080
 @function opaque($background, $foreground) {
+  @if meta.type-of($background) != color or meta.type-of($foreground) != color {
+    //@debug "opaque background: #{$background}";
+    //@debug "opaque foreground: #{$foreground}";
+    @if meta.type-of($foreground) != color {
+      $code: "{% assign a = #{liquid-unwrap(opacity($foreground))} | times: 100 %}";
+      $foreground: "#{rgba($foreground, 1)}";
+      @if string.index($foreground, "{%") == 1 {
+        $index: string.index($foreground, "\a{{");
+        $code: "#{string.slice($foreground, 1, $index)}#{$code}";
+        $foreground: "#{string.slice($foreground, $index + 1)}";
+      }
+      @if meta.type-of($background) != color {
+        @return "#{$code}\a{{ #{liquid-unwrap($foreground)} | color_mix: #{liquid-unwrap($background)}, a }}";
+      }
+      //@debug "opaque return #{$code}\a{{ #{$foreground} | color_mix: '#{$background}', a }}";
+      @return "#{$code}\a{{ #{liquid-unwrap($foreground)} | color_mix: '#{$background}', a }}";
+    }
+    @return "{{ '#{rgba($foreground, 1)}' | color_mix: #{liquid-unwrap($background)}, #{opacity($foreground) * 100} }}";
+  }
+  
   @return mix(rgba($foreground, 1), $background, opacity($foreground) * 100);
 }
 
