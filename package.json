@@ -1,11 +1,11 @@
 {
   "name": "liquid-bootstrap",
   "description": "Bootstrap, but a little more… liquid.",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "keywords": [
-	"bootstrap",
-	"liquid",
-	"shopify",
+    "bootstrap",
+    "liquid",
+    "shopify",
     "css",
     "sass",
     "mobile-first",
@@ -17,7 +17,7 @@
   "homepage": "https://github.com/jamescram/liquid-bootstrap",
   "author": "James Cram",
   "contributors": [
-	"The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)",
+    "The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)",
     "Twitter, Inc."
   ],
   "scripts": {
