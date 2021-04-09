@@ -1,11 +1,11 @@
 {
-  "name": "bootstrap",
-  "description": "The most popular front-end framework for developing responsive, mobile first projects on the web.",
-  "version": "5.0.0-beta3",
-  "config": {
-    "version_short": "5.0"
-  },
+  "name": "liquid-bootstrap",
+  "description": "Bootstrap, but a little more… liquid.",
+  "version": "0.0.0",
   "keywords": [
+	"bootstrap",
+	"liquid",
+	"shopify",
     "css",
     "sass",
     "mobile-first",
@@ -14,9 +14,10 @@
     "framework",
     "web"
   ],
-  "homepage": "https://getbootstrap.com/",
-  "author": "The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)",
+  "homepage": "https://github.com/jamescram/liquid-bootstrap",
+  "author": "James Cram",
   "contributors": [
+	"The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)",
     "Twitter, Inc."
   ],
   "scripts": {
@@ -85,16 +86,12 @@
   "module": "dist/js/bootstrap.esm.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/twbs/bootstrap.git"
+    "url": "https://github.com/jamescram/liquid-bootstrap.git"
   },
   "bugs": {
-    "url": "https://github.com/twbs/bootstrap/issues"
+    "url": "https://github.com/jamescram/liquid-bootstrap/issues"
   },
   "license": "MIT",
-  "funding": {
-    "type": "opencollective",
-    "url": "https://opencollective.com/bootstrap"
-  },
   "dependencies": {},
   "peerDependencies": {
     "@popperjs/core": "^2.9.1"
