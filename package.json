@@ -1,7 +1,7 @@
 {
   "name": "liquid-bootstrap",
   "description": "Bootstrap, but a little more… liquid.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "keywords": [
     "bootstrap",
     "liquid",
