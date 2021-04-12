@@ -205,25 +205,89 @@ $_luminance-list: .0008 .001 .0011 .0013 .0015 .0017 .002 .0022 .0025 .0027 .003
 
 @function color-contrast-check($background, $foreground, $value, $scale: $alert-color-scale, $color-contrast-dark: $color-contrast-dark, $color-contrast-light: $color-contrast-light, $min-contrast-ratio: $min-contrast-ratio) {
   @if meta.type-of($background) != color or meta.type-of($foreground) != color {
-    @if string.index($background, "{%") == 1 {
-      $index: string.index($background, "\a{{");
-      $code: string.slice($background, 1, $index);
-      $background: string.slice($background, $index + 1);
-      @return "#{$code}#{color-contrast-check($background, $foreground, $value, $scale, $color-contrast-dark, $color-contrast-light, $min-contrast-ratio)}";
+    $code: '';
+    
+    @if meta.type-of($background) != color {
+      @if string.index($background, "{%") == 1 {
+        $index: string.index($background, "\a{{");
+        $code: "#{$code}#{string.slice($background, 1, $index)}";
+        $background: string.slice($background, $index + 1);
+      }
+      $background: liquid-unwrap($background);
+    } @else {
+      $background: "'#{$background}'";
     }
-    @if string.index($foreground, "{%") == 1 {
-      $index: string.index($foreground, "\a{{");
-      $code: string.slice($foreground, 1, $index);
-      $foreground: string.slice($foreground, $index + 1);
-      @return "#{$code}#{color-contrast-check($background, $foreground, $value, $scale, $color-contrast-dark, $color-contrast-light, $min-contrast-ratio)}";
+    
+    @if meta.type-of($foreground) != color {
+      @if string.index($foreground, "{%") == 1 {
+        $index: string.index($foreground, "\a{{");
+        $code: "#{$code}#{string.slice($foreground, 1, $index)}";
+        $foreground: string.slice($foreground, $index + 1);
+      }
+      $foreground: liquid-unwrap($foreground);
+    } @else {
+      $foreground: "'#{$foreground}'";
     }
-    @if string.index($value, "{%") == 1 {
-      $index: string.index($value, "\a{{");
-      $code: string.slice($value, 1, $index);
-      $value: string.slice($value, $index + 1);
-      @return "#{$code}#{color-contrast-check($background, $foreground, $value, $scale, $color-contrast-dark, $color-contrast-light, $min-contrast-ratio)}";
+    
+    @if meta.type-of($value) != color {
+      @if string.index($value, "{%") == 1 {
+        $index: string.index($value, "\a{{");
+        $code: "#{$code}#{string.slice($value, 1, $index)}";
+        $value: string.slice($value, $index + 1);
+      }
+      $value: liquid-unwrap($value);
+    } @else {
+      $value: "'#{$value}'";
     }
-    @return "{% assign foreground = #{liquid-unwrap($foreground)} %}{% assign background = #{liquid-unwrap($background)} %}{% if background | color_contrast: foreground < #{$min-contrast-ratio} %}{% assign foregrounds = '#{$color-contrast-light} #{$color-contrast-dark} #{$white} #{$black}' | split: ' ' %}{% assign max-ratio = 0 %}{% assign max-ratio-color = '' %}{% for color in foregrounds %}{% assign contrast-ratio = background | color_contrast: color %}{% if contrast-ratio > #{$min-contrast-ratio} %}{% assign max-ratio-color = color %}{% break %}{% elsif contrast-ratio > max-ratio %}{% assign max-ratio = contrast-ratio %}{% assign max-ratio-color = color %}{% endif %}{% endfor %}{% assign foreground = #{liquid-unwrap($value)} | color_mix: max-ratio-color, #{abs($scale)} %}{% endif %}\a{{ foreground }}";
+    
+    @if meta.type-of($color-contrast-light) != color {
+      @if string.index($color-contrast-light, "{%") == 1 {
+        $index: string.index($color-contrast-light, "\a{{");
+        $code: "#{$code}#{string.slice($color-contrast-light, 1, $index)}";
+        $color-contrast-light: string.slice($color-contrast-light, $index + 1);
+      }
+      $color-contrast-light: liquid-unwrap($color-contrast-light);
+    } @else {
+      $color-contrast-light: "'#{$color-contrast-light}'";
+    }
+    
+    @if meta.type-of($color-contrast-dark) != color {
+      @if string.index($color-contrast-dark, "{%") == 1 {
+        $index: string.index($color-contrast-dark, "\a{{");
+        $code: "#{$code}#{string.slice($color-contrast-dark, 1, $index)}";
+        $color-contrast-dark: string.slice($color-contrast-dark, $index + 1);
+      }
+      $color-contrast-dark: liquid-unwrap($color-contrast-dark);
+    } @else {
+      $color-contrast-dark: "'#{$color-contrast-dark}'";
+    }
+    
+    $white-local: $white;
+    @if meta.type-of($white-local) != color {
+      @if string.index($white-local, "{%") == 1 {
+        $index: string.index($white-local, "\a{{");
+        $code: "#{$code}#{string.slice($white-local, 1, $index)}";
+        $white-local: string.slice($white-local, $index + 1);
+      }
+      $white-local: liquid-unwrap($white-local);
+    } @else {
+      $white-local: "'#{$white-local}'";
+    }
+    
+    $black-local: $black;
+    @if meta.type-of($black-local) != color {
+      @if string.index($black-local, "{%") == 1 {
+        $index: string.index($black-local, "\a{{");
+        $code: "#{$code}#{string.slice($black-local, 1, $index)}";
+        $black-local: string.slice($black-local, $index + 1);
+      }
+      $black-local: liquid-unwrap($black-local);
+    } @else {
+      $black-local: "'#{$black-local}'";
+    }
+    
+    
+    @return "#{$code}{% assign foreground = #{$foreground} %}{% assign background = #{$background} %}{% if background | color_contrast: foreground < #{$min-contrast-ratio} %}{% assign color-contrast-light = #{$color-contrast-light} %}{% assign color-contrast-dark = #{$color-contrast-dark} %}{% assign white = #{$white-local} %}{% assign black = #{$black-local} %}{% assign foregrounds = color-contrast-light | append: ' ' | append: color-contrast-dark | append: ' ' | append: white | append: ' ' | append: black | split: ' ' %}{% assign max-ratio = 0 %}{% assign max-ratio-color = '' %}{% for color in foregrounds %}{% assign contrast-ratio = background | color_contrast: color %}{% if contrast-ratio > #{$min-contrast-ratio} %}{% assign max-ratio-color = color %}{% break %}{% elsif contrast-ratio > max-ratio %}{% assign max-ratio = contrast-ratio %}{% assign max-ratio-color = color %}{% endif %}{% endfor %}{% assign foreground = #{$value} | color_mix: max-ratio-color, #{abs($scale)} %}{% endif %}\a{{ foreground }}";
   } @else if (contrast-ratio($background, $foreground) < $min-contrast-ratio) {
     @return mix($value, color-contrast($background), abs($scale));
   }
@@ -233,14 +297,66 @@ $_luminance-list: .0008 .001 .0011 .0013 .0015 .0017 .002 .0022 .0025 .0027 .003
 
 @function color-contrast($background, $color-contrast-dark: $color-contrast-dark, $color-contrast-light: $color-contrast-light, $min-contrast-ratio: $min-contrast-ratio) {  
   @if meta.type-of($background) != color or meta.type-of($color-contrast-light) != color or meta.type-of($color-contrast-dark) != color or meta.type-of($white) != color or meta.type-of($black) != color {
-    //@debug "color-contrast background: #{$background}";
     $code: '';
-    @if string.index($background, "{%") == 1 {
-      $index: string.index($background, "\a{{");
-      $code: string.slice($background, 1, $index);
-      $background: string.slice($background, $index + 1);
+    
+    @if meta.type-of($background) != color {
+      @if string.index($background, "{%") == 1 {
+        $index: string.index($background, "\a{{");
+        $code: "#{$code}#{string.slice($background, 1, $index)}";
+        $background: string.slice($background, $index + 1);
+      }
+      $background: liquid-unwrap($background);
+    } @else {
+      $background: "'#{$background}'";
     }
-    @return "{% assign foregrounds = '#{$color-contrast-light} #{$color-contrast-dark} #{$white} #{$black}' | split: ' ' %}{% assign max-ratio = 0 %}{% assign max-ratio-color = '' %}{% for color in foregrounds %}\a#{$code}{% assign contrast-ratio = #{liquid-unwrap($background)} | color_contrast: color %}{% if contrast-ratio > #{$min-contrast-ratio} %}{% assign max-ratio-color = color %}{% break %}{% elsif contrast-ratio > max-ratio %}{% assign max-ratio = contrast-ratio %}{% assign max-ratio-color = color %}{% endif %}{% endfor %}\a{{ max-ratio-color }}";
+    
+    @if meta.type-of($color-contrast-light) != color {
+      @if string.index($color-contrast-light, "{%") == 1 {
+        $index: string.index($color-contrast-light, "\a{{");
+        $code: "#{$code}#{string.slice($color-contrast-light, 1, $index)}";
+        $color-contrast-light: string.slice($color-contrast-light, $index + 1);
+      }
+      $color-contrast-light: liquid-unwrap($color-contrast-light);
+    } @else {
+      $color-contrast-light: "'#{$color-contrast-light}'";
+    }
+    
+    @if meta.type-of($color-contrast-dark) != color {
+      @if string.index($color-contrast-dark, "{%") == 1 {
+        $index: string.index($color-contrast-dark, "\a{{");
+        $code: "#{$code}#{string.slice($color-contrast-dark, 1, $index)}";
+        $color-contrast-dark: string.slice($color-contrast-dark, $index + 1);
+      }
+      $color-contrast-dark: liquid-unwrap($color-contrast-dark);
+    } @else {
+      $color-contrast-dark: "'#{$color-contrast-dark}'";
+    }
+    
+    $white-local: $white;
+    @if meta.type-of($white-local) != color {
+      @if string.index($white-local, "{%") == 1 {
+        $index: string.index($white-local, "\a{{");
+        $code: "#{$code}#{string.slice($white-local, 1, $index)}";
+        $white-local: string.slice($white-local, $index + 1);
+      }
+      $white-local: liquid-unwrap($white-local);
+    } @else {
+      $white-local: "'#{$white-local}'";
+    }
+    
+    $black-local: $black;
+    @if meta.type-of($black-local) != color {
+      @if string.index($black-local, "{%") == 1 {
+        $index: string.index($black-local, "\a{{");
+        $code: "#{$code}#{string.slice($black-local, 1, $index)}";
+        $black-local: string.slice($black-local, $index + 1);
+      }
+      $black-local: liquid-unwrap($black-local);
+    } @else {
+      $black-local: "'#{$black-local}'";
+    }
+    
+    @return "#{$code}{% assign background = #{$background} %}{% assign color-contrast-light = #{$color-contrast-light} %}{% assign color-contrast-dark = #{$color-contrast-dark} %}{% assign white = #{$white-local} %}{% assign black = #{$black-local} %}{% assign foregrounds = color-contrast-light | append: ' ' | append: color-contrast-dark | append: ' ' | append: white | append: ' ' | append: black | split: ' ' %}{% assign max-ratio = 0 %}{% assign max-ratio-color = '' %}{% for color in foregrounds %}\a{% assign contrast-ratio = background | color_contrast: color %}{% if contrast-ratio > #{$min-contrast-ratio} %}{% assign max-ratio-color = color %}{% break %}{% elsif contrast-ratio > max-ratio %}{% assign max-ratio = contrast-ratio %}{% assign max-ratio-color = color %}{% endif %}{% endfor %}\a{{ max-ratio-color }}";
   }
   
   $foregrounds: $color-contrast-light, $color-contrast-dark, $white, $black;
