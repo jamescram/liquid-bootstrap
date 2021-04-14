@@ -3,6 +3,7 @@
 @use "sass:meta";
 @use "sass:color";
 @use "sass:math";
+@use "sass:map";
 
 // Liquid functions
 //
@@ -182,7 +183,30 @@
 // Requires the use of quotes around data URIs.
 
 @function escape-svg($string) {
-  @if str-index($string, "data:image/svg+xml") {
+  @if str-index($string, "data:image/svg+xml") {    
+    $i: 0;
+    $code-map: ();
+    @while string.index($string, "{%") {
+      $index-start: string.index($string, "{%");
+      $index-end: string.index($string, "\\a{{") + 1;
+      $code: string.slice($string, $index-start, $index-end);
+      $string: str-replace($string, $code, "LiquidCode#{$i}");
+      $code-map: map.set($code-map, $i, $code);
+      $i: $i + 1;
+    }
+    
+    $i: 0;
+    $object-map: ();
+    @while string.index($string, "{{") {
+      $index-start: string.index($string, "{{");
+      $index-end: string.index($string, "}}") + 1;
+      $object: string.slice($string, $index-start, $index-end);
+      $string: str-replace($string, $object, "LiquidObject#{$i}");
+      $object-map: map.set($object-map, $i, $object);
+      $i: $i + 1;
+    }
+        
+    $liquid-filter: "";
     @each $char, $encoded in $escaped-characters {
       // Do not escape the url brackets
       @if str-index($string, "url(") == 1 {
@@ -190,6 +214,16 @@
       } @else {
         $string: str-replace($string, $char, $encoded);
       }
+      $liquid-filter: "#{$liquid-filter} | replace: '#{$char}', '#{$encoded}'";
+    }
+    
+    @each $i, $code in $code-map {
+      $string: str-replace($string, "LiquidCode#{$i}", $code);
+    }
+    
+    @each $i, $object in $object-map {
+      $object: string.insert($object, $liquid-filter, -4);
+      $string: str-replace($string, "LiquidObject#{$i}", $object);
     }
   }
 
@@ -205,7 +239,7 @@ $_luminance-list: .0008 .001 .0011 .0013 .0015 .0017 .002 .0022 .0025 .0027 .003
 
 @function color-contrast-check($background, $foreground, $value, $scale: $alert-color-scale, $color-contrast-dark: $color-contrast-dark, $color-contrast-light: $color-contrast-light, $min-contrast-ratio: $min-contrast-ratio) {
   @if meta.type-of($background) != color or meta.type-of($foreground) != color {
-    $code: '';
+    $code: "";
     
     @if meta.type-of($background) != color {
       @if string.index($background, "{%") == 1 {
@@ -297,7 +331,7 @@ $_luminance-list: .0008 .001 .0011 .0013 .0015 .0017 .002 .0022 .0025 .0027 .003
 
 @function color-contrast($background, $color-contrast-dark: $color-contrast-dark, $color-contrast-light: $color-contrast-light, $min-contrast-ratio: $min-contrast-ratio) {  
   @if meta.type-of($background) != color or meta.type-of($color-contrast-light) != color or meta.type-of($color-contrast-dark) != color or meta.type-of($white) != color or meta.type-of($black) != color {
-    $code: '';
+    $code: "";
     
     @if meta.type-of($background) != color {
       @if string.index($background, "{%") == 1 {
