@@ -415,11 +415,11 @@ $_luminance-list: .0008 .001 .0011 .0013 .0015 .0017 .002 .0022 .0025 .0027 .003
 @function contrast-ratio($background, $foreground: $color-contrast-light) {
   @if meta.type-of($background) != color or meta.type-of($foreground) != color {
     @if meta.type-of($foreground) != color {
-      $code: "{% assign foreground = #{liquid-unwrap($foreground)} %}";
+      $code: "{% assign foreground = #{liquid-unwrap($foreground)} %}\a";
       @if meta.type-of($background) != color {
-        @return "#{$code}\a{{ #{liquid-unwrap($background)} | color_contrast: foreground }}";
+        @return "#{$code}{{ #{liquid-unwrap($background)} | color_contrast: foreground }}";
       }
-      @return "#{$code}\a{{ '#{$background}' | color_contrast: foreground }}";
+      @return "#{$code}{{ '#{$background}' | color_contrast: foreground }}";
     }
     @return "{{ #{liquid-unwrap($background)} | color_contrast: '#{$foreground}' }}";
   }
@@ -461,7 +461,7 @@ $_luminance-list: .0008 .001 .0011 .0013 .0015 .0017 .002 .0022 .0025 .0027 .003
         $foreground: string.slice($foreground, $index + 1);
         @return "#{$code}#{opaque($background, $foreground)}";
       }
-      $code: "{% assign a = #{liquid-unwrap(opacity($foreground))} | times: 100 %}";
+      $code: "{% assign a = #{liquid-unwrap(opacity($foreground))} | times: 100 %}\a";
       $foreground: "#{rgba($foreground, 1)}";
       @if string.index($foreground, "{%") == 1 {
         $index: string.index($foreground, "\a{{");
@@ -469,12 +469,23 @@ $_luminance-list: .0008 .001 .0011 .0013 .0015 .0017 .002 .0022 .0025 .0027 .003
         $foreground: "#{string.slice($foreground, $index + 1)}";
       }
       @if meta.type-of($background) != color {
-        @return "#{$code}\a{{ #{liquid-unwrap($foreground)} | color_mix: #{liquid-unwrap($background)}, a }}";
+        @if string.index($background, "{%") == 1 {
+          $index: string.index($background, "\a{{");
+          $code: "#{string.slice($background, 1, $index)}#{$code}";
+          $background: "#{string.slice($background, $index + 1)}";
+        }
+        @return "#{$code}{{ #{liquid-unwrap($foreground)} | color_mix: #{liquid-unwrap($background)}, a }}";
       }
-      //@debug "opaque return #{$code}\a{{ #{$foreground} | color_mix: '#{$background}', a }}";
-      @return "#{$code}\a{{ #{liquid-unwrap($foreground)} | color_mix: '#{$background}', a }}";
+      //@debug "opaque return #{$code}{{ #{$foreground} | color_mix: '#{$background}', a }}";
+      @return "#{$code}{{ #{liquid-unwrap($foreground)} | color_mix: '#{$background}', a }}";
     }
-    @return "{{ '#{rgba($foreground, 1)}' | color_mix: #{liquid-unwrap($background)}, #{opacity($foreground) * 100} }}";
+    $code: "";
+    @if string.index($background, "{%") == 1 {
+      $index: string.index($background, "\a{{");
+      $code: "#{string.slice($background, 1, $index)}\a";
+      $background: "#{string.slice($background, $index + 1)}";
+    }
+    @return "#{$code}{{ '#{rgba($foreground, 1)}' | color_mix: #{liquid-unwrap($background)}, #{opacity($foreground) * 100} }}";
   }
   
   @return mix(rgba($foreground, 1), $background, opacity($foreground) * 100);
